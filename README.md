@@ -18,6 +18,32 @@ pnpm exec tsc --noEmit
 
 TanStack prerenders the homepage to `dist/client/index.html`; deploy `dist/client` to a static host. The interactive application hydrates in the browser. Sites deployment configuration is in `.openai/hosting.json`.
 
+## Docker
+
+With Docker Engine and Docker Compose running (Docker Desktop or OrbStack on macOS):
+
+```sh
+docker compose up --build -d
+```
+
+Open http://localhost:3000. The image builds the site with Node 24.22.1 (pinned by version and image digest) and pnpm 12.14.0 using the frozen lockfile, then serves `dist/client` with Nginx. This matches the static deployment above; server-side handlers are not included. No local Node installation or environment file is required.
+
+To use a different host port:
+
+```sh
+PORT=8080 docker compose up --build -d
+```
+
+Check status and logs, or stop the service:
+
+```sh
+docker compose ps
+docker compose logs -f web
+docker compose down
+```
+
+Run `docker compose up --build -d` again after source changes. This runs the production build; use `pnpm dev` for local hot reload. Local dependencies, build output, Git metadata, and environment files are excluded from the Docker build context.
+
 ## Content and branding
 
 - `src/content.ts`: English and Bahasa Indonesia copy.
