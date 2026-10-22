@@ -362,7 +362,17 @@ function Home() {
 								aria-current={chapter === i ? "step" : undefined}
 							>
 								<span className="nav-dot">
-									{chapter === i ? "✳" : String(i + 1).padStart(2, "0")}
+									{chapter === i ? (
+										<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+											<path
+												d="M12 2v20M2 12h20M5 5l14 14M5 19 19 5"
+												stroke="currentColor"
+												strokeWidth="1.6"
+											/>
+										</svg>
+									) : (
+										String(i + 1).padStart(2, "0")
+									)}
 								</span>
 								<span>{label}</span>
 							</button>

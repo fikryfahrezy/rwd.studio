@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&display=swap');
 @import "tailwindcss";
+.nav-dot svg{display:block;width:16px;height:16px}
 /* Each chapter owns a contrasting copy/background pair, including on reload. */
 .welcome-copy{--copy-background:#ece9df;--copy-ink:#22231e}
 .thinking-copy{--copy-background:#ffc5ab;--copy-ink:#22231e}
