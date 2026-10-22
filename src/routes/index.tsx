@@ -1,119 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import PlaySculpture from "../components/PlaySculpture";
+import StudioScene from "../components/StudioScene";
+import { useStudioMotion } from "../hooks/useStudioMotion";
 import { copy } from "../content";
+import { experience } from "../experience";
 import type { Locale } from "../content";
-
 export const Route = createFileRoute("/")({ component: Home });
 const enquiryEmail = "fahrezyfikry@gmail.com";
-const Arrow = ({ diagonal = false }: { diagonal?: boolean }) => (
-	<span aria-hidden="true">{diagonal ? "↗" : "↗"}</span>
-);
-
-function ConceptArt({ index }: { index: number }) {
-	if (index === 0)
-		return (
-			<div className="concept-art art-sculpture" aria-hidden="true">
-				<div className="sculpture-orbit orbit-one" />
-				<div className="sculpture-orbit orbit-two" />
-				<div className="sculpture-orbit orbit-three" />
-				<span className="art-caption">FORM / 001</span>
-				<span className="art-star">✳</span>
-			</div>
-		);
-	if (index === 1)
-		return (
-			<div className="concept-art art-digital" aria-hidden="true">
-				<div className="browser-card">
-					<div className="browser-top">
-						<span>● ● ●</span>
-						<span>human / interface</span>
-						<span>↗</span>
-					</div>
-					<div className="browser-body">
-						<span className="tiny-label">LESS FRICTION. MORE FLOW.</span>
-						<strong>
-							Space to
-							<br />
-							<i>do more.</i>
-						</strong>
-						<div className="ui-pill">
-							Make room for what matters <span>↗</span>
-						</div>
-						<div className="ui-chart">
-							{[35, 55, 42, 70, 58, 85, 100].map((n, i) => (
-								<span key={i} style={{ height: `${n}%` }} />
-							))}
-						</div>
-					</div>
-				</div>
-				<span className="art-caption">HUMAN / 002</span>
-			</div>
-		);
-	return (
-		<div className="concept-art art-film" aria-hidden="true">
-			<svg viewBox="0 0 600 650" preserveAspectRatio="xMidYMid slice">
-				<defs>
-					<linearGradient id="sky" x2="0" y2="1">
-						<stop stopColor="#d7d6bf" />
-						<stop offset="1" stopColor="#a9b2a4" />
-					</linearGradient>
-					<linearGradient id="mountain" x2="1" y2="1">
-						<stop stopColor="#686e54" />
-						<stop offset="1" stopColor="#262f25" />
-					</linearGradient>
-					<filter id="grain">
-						<feTurbulence
-							type="fractalNoise"
-							baseFrequency=".7"
-							numOctaves="3"
-							stitchTiles="stitch"
-						/>
-						<feColorMatrix type="saturate" values="0" />
-						<feComponentTransfer>
-							<feFuncA type="linear" slope=".12" />
-						</feComponentTransfer>
-						<feBlend in="SourceGraphic" mode="multiply" />
-					</filter>
-				</defs>
-				<g filter="url(#grain)">
-					<path fill="url(#sky)" d="M0 0h600v650H0z" />
-					<circle cx="420" cy="180" r="65" fill="#f3e5af" />
-					<path fill="#8d967e" d="M-40 440Q90 210 230 320T650 230V650H0Z" />
-					<path
-						fill="url(#mountain)"
-						d="M-40 530Q120 260 290 430T650 360V650H0Z"
-					/>
-					<path fill="#243c30" d="M-20 650Q160 420 340 540T650 480V680H0Z" />
-					<path
-						fill="none"
-						stroke="#d1c29b"
-						strokeWidth="12"
-						d="M300 680Q450 580 335 535T210 472"
-					/>
-				</g>
-			</svg>
-			<span className="film-title">
-				A quieter
-				<br />
-				<i>kind of wonder.</i>
-			</span>
-			<div className="frame-corners" />
-			<span className="art-caption">STILL / 003</span>
-			<span className="film-dot">● REC</span>
-		</div>
-	);
-}
-
+const Arrow = () => <span aria-hidden="true">↗</span>;
 function Home() {
 	const [locale, setLocale] = useState<Locale>("en");
-	const [menu, setMenu] = useState(false);
-	const [paused, setPaused] = useState(false);
+	const [chapter, setChapter] = useState(0);
+	const [motion, setMotion] = useState(true);
 	const [modal, setModal] = useState<"brief" | number | null>(null);
 	const [status, setStatus] = useState("");
 	const dialog = useRef<HTMLDialogElement>(null);
-	const t = copy[locale];
+	const t = copy[locale],
+		e = experience[locale];
+	const smoothScroll = useStudioMotion(modal !== null, motion, setChapter);
 	useEffect(() => {
 		const fromURL = new URLSearchParams(window.location.search).get("lang");
 		let saved: string | null = null;
@@ -157,7 +62,6 @@ function Home() {
 		window.history.replaceState(null, "", url);
 	}
 	function startProject() {
-		setMenu(false);
 		setStatus("");
 		setModal("brief");
 	}
@@ -180,269 +84,304 @@ function Home() {
 		window.location.href = `mailto:${enquiryEmail}?subject=${encodeURIComponent(`${locale === "en" ? "New project" : "Proyek baru"} — ${data.get("name")}`)}&body=${encodeURIComponent(body)}`;
 		setStatus(t.emailReady);
 	}
-	const project = typeof modal === "number" ? t.projects[modal] : null;
+	const project = typeof modal === "number" ? t.services[modal] : null;
+	function jumpTo(index: number) {
+		const journey = document.getElementById("journey");
+		if (!journey) return;
+		const y =
+			journey.offsetTop +
+			((journey.offsetHeight - window.innerHeight) * index) / 5;
+		if (smoothScroll.current)
+			smoothScroll.current.scrollTo(y, { duration: 1.5, force: true });
+		else window.scrollTo({ top: y, behavior: "smooth" });
+	}
+	function pickObject(index: number) {
+		const target = [2, 3, 4, 4][index];
+		if (chapter === target) setModal(index);
+		else jumpTo(target);
+	}
 	return (
-		<>
-			<a className="skip-link" href="#main">
-				{t.skip}
+		<div className={`playground chapter-${chapter}`} lang={locale}>
+			<a
+				className="skip-link"
+				href="#project"
+				onClick={(event) => {
+					event.preventDefault();
+					startProject();
+				}}
+			>
+				{e.skip}
 			</a>
-			<header className="site-header" id="top">
-				<a className="wordmark" href="#top" aria-label="RWD Studio">
-					<span>
-						rwd<span className="wordmark-dot">®</span>
-					</span>
-					<small>studio</small>
-				</a>
-				<nav
-					className="desktop-nav"
-					aria-label={locale === "en" ? "Main navigation" : "Navigasi utama"}
+			<header className="studio-header">
+				<button
+					className="wordmark"
+					type="button"
+					onClick={() => jumpTo(0)}
+					aria-label="RWD Studio — Home"
 				>
-					{t.nav.map((label, i) => (
-						<a key={label} href={["#explorations", "#services", "#studio"][i]}>
-							{label}
-							<span className="nav-number">0{i + 1}</span>
-						</a>
-					))}
-				</nav>
+					rwd<span>®</span>
+					<small>STUDIO</small>
+				</button>
+				<span className="header-statement">{e.studio}</span>
 				<div className="header-actions">
 					<div className="locale-switch" aria-label="Language / Bahasa">
-						<button
-							type="button"
-							aria-pressed={locale === "en"}
-							onClick={() => changeLocale("en")}
-						>
-							EN
-						</button>
-						<span>/</span>
-						<button
-							type="button"
-							aria-pressed={locale === "id"}
-							onClick={() => changeLocale("id")}
-						>
-							ID
-						</button>
-					</div>
-					<button className="header-cta" type="button" onClick={startProject}>
-						{t.start} <Arrow />
-					</button>
-					<button
-						className="menu-toggle"
-						type="button"
-						aria-expanded={menu}
-						aria-controls="mobile-menu"
-						onClick={() => setMenu(!menu)}
-					>
-						{menu ? t.close : t.menu} <span>{menu ? "−" : "+"}</span>
-					</button>
-				</div>
-			</header>
-			{menu && (
-				<nav className="mobile-menu" id="mobile-menu">
-					{t.nav.map((label, i) => (
-						<a
-							key={label}
-							href={["#explorations", "#services", "#studio"][i]}
-							onClick={() => setMenu(false)}
-						>
-							{label}
-							<Arrow />
-						</a>
-					))}
-					<button type="button" onClick={startProject}>
-						{t.start}
-						<Arrow />
-					</button>
-				</nav>
-			)}
-			<main id="main">
-				<section className="hero" aria-labelledby="hero-heading">
-					<div className="hero-topline">
-						<span className="eyebrow">
-							<span className="status-dot" />
-							{t.eyebrow}
-						</span>
-						<span className="hero-edition">CREATIVE STUDIO / VOL. 01</span>
-					</div>
-					<div className="hero-main">
-						<h1 id="hero-heading">
-							{t.hero[0]}
-							<br />
-							{t.hero[1]}
-							<br />
-							<em>{t.play}</em>
-							<span className="headline-star" aria-hidden="true">
-								✳
-							</span>
-						</h1>
-						<div className="hero-visual">
-							<div className="object-axis axis-x" />
-							<div className="object-axis axis-y" />
-							<span className="object-coordinate coordinate-top">
-								RWD — OBJECT 001
-							</span>
-							<PlaySculpture paused={paused} />
-							<div className="object-controls">
-								<span>{t.interact}</span>
-								<button
-									type="button"
-									onClick={() => setPaused(!paused)}
-									aria-label={paused ? t.resume : t.motion}
-									title={paused ? t.resume : t.motion}
-								>
-									{paused ? "▶" : "Ⅱ"}
-								</button>
-							</div>
-							<span className="object-caption">{t.object}</span>
-						</div>
-					</div>
-					<div className="hero-bottom">
-						<a className="explore-link" href="#explorations">
-							<span className="circle-arrow">↓</span>
-							{t.explore}
-						</a>
-						<p>{t.intro}</p>
-						<span className="hero-index">(01—04)</span>
-					</div>
-				</section>
-				<div className="discipline-strip">
-					{t.disciplines.map((item) => (
-						<span key={item}>
-							{item}
-							<span aria-hidden="true">✳</span>
-						</span>
-					))}
-				</div>
-				<section className="work-section section-wrap" id="explorations">
-					<div className="section-heading">
-						<div>
-							<span className="eyebrow">{t.workLabel}</span>
-							<h2>{t.workTitle}</h2>
-						</div>
-						<p>{t.workIntro}</p>
-					</div>
-					<div className="work-grid">
-						{t.projects.map((item, i) => (
+						{(["en", "id"] as Locale[]).map((lang) => (
 							<button
-								className={`work-card work-card-${i}`}
-								key={item.title}
+								key={lang}
 								type="button"
-								onClick={() => setModal(i)}
-								aria-label={`${t.view}: ${item.title}`}
+								aria-pressed={locale === lang}
+								onClick={() => changeLocale(lang)}
 							>
-								<div className="work-image">
-									<ConceptArt index={i} />
-									<span className="concept-tag">{t.concept}</span>
-									<span className="work-open">
-										<Arrow />
-									</span>
-								</div>
-								<div className="work-meta">
-									<h3>{item.title}</h3>
-									<span>0{i + 1}</span>
-								</div>
-								<p>{item.type}</p>
+								{lang.toUpperCase()}
 							</button>
 						))}
 					</div>
-				</section>
-				<section className="services-section section-wrap" id="services">
-					<div className="services-intro">
-						<span className="eyebrow">{t.servicesLabel}</span>
-						<h2>{t.servicesTitle}</h2>
-						<p>{t.servicesIntro}</p>
-						<span className="big-asterisk" aria-hidden="true">
-							✳
-						</span>
-					</div>
-					<div className="services-list">
-						{t.services.map((service, i) => (
-							<details
-								key={service.title}
-								name="services"
-								open={i === 0 ? true : undefined}
-							>
-								<summary>
-									<span className="service-number">0{i + 1}</span>
-									<h3>{service.title}</h3>
-									<span className="details-sign" aria-hidden="true" />
-								</summary>
-								<div className="service-content">
-									<p>{service.detail}</p>
-									<div className="tags">
-										{service.tags.map((tag) => (
-											<span key={tag}>{tag}</span>
-										))}
-									</div>
-								</div>
-							</details>
-						))}
-					</div>
-				</section>
-				<section className="studio-section section-wrap" id="studio">
-					<div className="studio-intro">
-						<span className="eyebrow">{t.aboutLabel}</span>
-						<h2>{t.aboutTitle}</h2>
-						<span className="studio-symbol" aria-hidden="true">
-							↗
-						</span>
-					</div>
-					<div className="studio-copy">
-						<p>{t.aboutBody}</p>
-						<p className="studio-mantra">{t.aboutEnd}</p>
-						<div className="process-grid">
-							{t.process.map((step, i) => (
-								<div key={step.title}>
-									<span>0{i + 1} /</span>
-									<h3>{step.title}</h3>
-									<p>{step.text}</p>
-								</div>
-							))}
-						</div>
-					</div>
-				</section>
-				<section className="contact-section section-wrap">
-					<div className="contact-top">
-						<span className="eyebrow">
-							<span className="status-dot" />
-							{t.contactLabel}
-						</span>
-						<span className="contact-asterisk" aria-hidden="true">
-							✳
-						</span>
-					</div>
 					<button
-						className="contact-title"
+						className="header-project"
 						type="button"
 						onClick={startProject}
 					>
-						<span>{t.contactTitle}</span>
-						<span className="contact-arrow" aria-hidden="true">
-							↗
-						</span>
+						{t.start}
+						<Arrow />
 					</button>
-					<div className="contact-bottom">
-						<p>{t.contactText}</p>
+				</div>
+			</header>
+			<main id="journey" className="journey" aria-label={e.instructions}>
+				<div id="world" className="world">
+					<div className="world-grid" aria-hidden="true" />
+					<span className="edge-label edge-left" aria-hidden="true">
+						RWD STUDIO — IDEAS IN PLAY
+					</span>
+					<span className="edge-label edge-right" aria-hidden="true">
+						SCROLL / EXPLORE / MAKE SOMETHING
+					</span>
+					<StudioScene
+						locale={locale}
+						suspended={modal !== null}
+						motion={motion}
+						onSelect={pickObject}
+					/>
+					<section
+						className="chapter-copy welcome-copy"
+						data-chapter-copy="0"
+						aria-hidden={chapter !== 0}
+					>
+						<div className="welcome-heading">
+							<span className="eyebrow">{e.heroNote}</span>
+							<h1>
+								<span>{e.hero[0]}</span>
+								<span>{e.hero[1]}</span>
+							</h1>
+						</div>
 						<button
-							className="pill-button"
+							className="scroll-sticker"
+							type="button"
+							onClick={() => jumpTo(1)}
+							tabIndex={chapter === 0 ? 0 : -1}
+						>
+							<span>{e.sticker}</span>
+							<span aria-hidden="true">↓</span>
+						</button>
+						<p className="welcome-description">{e.heroDescription}</p>
+						<span className="little-note">
+							{e.touch}
+							<svg viewBox="0 0 90 55" aria-hidden="true">
+								<path
+									d="M3 4Q70 0 65 40M52 30l13 13 12-15"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+								/>
+							</svg>
+						</span>
+					</section>
+					<section
+						className="chapter-copy thinking-copy"
+						data-chapter-copy="1"
+						aria-hidden={chapter !== 1}
+						style={{ opacity: 0, visibility: "hidden" }}
+					>
+						<span className="chapter-index">01 / {e.nav[1].toUpperCase()}</span>
+						<h2>
+							{e.ideaTitle[0]}
+							<br />
+							<em>{e.ideaTitle[1]}</em>
+						</h2>
+						<div className="thinking-note">
+							<span className="asterisk">✳</span>
+							<p>{e.ideaBody}</p>
+						</div>
+						<span className="thinking-foot">{e.ideaNote}</span>
+					</section>
+					<section
+						className="chapter-copy digital-copy"
+						data-chapter-copy="2"
+						aria-hidden={chapter !== 2}
+						style={{ opacity: 0, visibility: "hidden" }}
+					>
+						<span className="chapter-index">{e.digitalNote}</span>
+						<h2>
+							{e.digitalTitle[0]}
+							<br />
+							<em>{e.digitalTitle[1]}</em>
+						</h2>
+						<div className="discipline-description">
+							<p>{e.digitalBody}</p>
+							<button
+								type="button"
+								onClick={() => setModal(0)}
+								tabIndex={chapter === 2 ? 0 : -1}
+							>
+								{e.more}
+								<Arrow />
+							</button>
+						</div>
+						<span className="code-mark" aria-hidden="true">
+							{"</>"}
+						</span>
+						<div className="capability-strip">
+							{t.services[0].tags.map((tag) => (
+								<span key={tag}>
+									{tag} <i>✳</i>
+								</span>
+							))}
+						</div>
+					</section>
+					<section
+						className="chapter-copy film-copy"
+						data-chapter-copy="3"
+						aria-hidden={chapter !== 3}
+						style={{ opacity: 0, visibility: "hidden" }}
+					>
+						<div className="film-sprockets" aria-hidden="true" />
+						<span className="chapter-index">{e.filmNote}</span>
+						<h2>
+							{e.filmTitle[0]}
+							<br />
+							<em>{e.filmTitle[1]}</em>
+						</h2>
+						<div className="discipline-description">
+							<p>{e.filmBody}</p>
+							<button
+								type="button"
+								onClick={() => setModal(1)}
+								tabIndex={chapter === 3 ? 0 : -1}
+							>
+								{e.more}
+								<Arrow />
+							</button>
+						</div>
+						<span className="record-mark">
+							<i />
+							REC <span>00:00:03</span>
+						</span>
+						<div className="frame-guide" aria-hidden="true" />
+					</section>
+					<section
+						className="chapter-copy motion-copy"
+						data-chapter-copy="4"
+						aria-hidden={chapter !== 4}
+						style={{ opacity: 0, visibility: "hidden" }}
+					>
+						<span className="chapter-index">{e.motionNote}</span>
+						<h2>
+							{e.motionTitle.map((line, i) => (
+								<span key={line}>{i === 1 ? <em>{line}</em> : line}</span>
+							))}
+						</h2>
+						<div className="discipline-description">
+							<p>{e.motionBody}</p>
+							<div className="discipline-links">
+								<button
+									type="button"
+									onClick={() => setModal(2)}
+									tabIndex={chapter === 4 ? 0 : -1}
+								>
+									{t.disciplines[2]}
+									<Arrow />
+								</button>
+								<button
+									type="button"
+									onClick={() => setModal(3)}
+									tabIndex={chapter === 4 ? 0 : -1}
+								>
+									{e.drawing}
+									<Arrow />
+								</button>
+							</div>
+						</div>
+						<span className="motion-doodle" aria-hidden="true">
+							↝
+						</span>
+					</section>
+					<section
+						className="chapter-copy end-copy"
+						data-chapter-copy="5"
+						aria-hidden={chapter !== 5}
+						style={{ opacity: 0, visibility: "hidden" }}
+						id="project"
+					>
+						<span className="end-note">{e.endNote}</span>
+						<h2>
+							{e.endTitle[0]}
+							<br />
+							<em>{e.endTitle[1]}</em>
+						</h2>
+						<button
+							className="project-sticker"
 							type="button"
 							onClick={startProject}
+							tabIndex={chapter === 5 ? 0 : -1}
 						>
 							{t.start}
 							<Arrow />
 						</button>
+						<p>{e.endBody}</p>
+						<a
+							className="end-email"
+							href={`mailto:${enquiryEmail}`}
+							tabIndex={chapter === 5 ? 0 : -1}
+						>
+							{enquiryEmail} ↗
+						</a>
+					</section>
+					<nav
+						className="journey-nav"
+						aria-label={
+							locale === "en" ? "Explore the studio" : "Jelajahi studio"
+						}
+					>
+						<span className="journey-line" />
+						{e.nav.map((label, i) => (
+							<button
+								key={label}
+								type="button"
+								onClick={() => jumpTo(i)}
+								aria-current={chapter === i ? "step" : undefined}
+							>
+								<span className="nav-dot">
+									{chapter === i ? "✳" : String(i + 1).padStart(2, "0")}
+								</span>
+								<span>{label}</span>
+							</button>
+						))}
+					</nav>
+					<div className="world-bottom">
+						<span>© {new Date().getFullYear()} RWD STUDIO</span>
+						<button
+							type="button"
+							onClick={() => setMotion(!motion)}
+							aria-pressed={motion}
+						>
+							{e.motion}: {motion ? e.on : e.off}
+						</button>
+						<span className="scroll-invitation">{e.hint} ↓</span>
 					</div>
-				</section>
+				</div>
 			</main>
-			<footer className="site-footer">
-				<a className="footer-logo" href="#top">
-					rwd studio®
-				</a>
-				<p>{t.footer}</p>
-				<span>© {new Date().getFullYear()} RWD Studio</span>
-				<a href="#top">{t.top} ↑</a>
-			</footer>
 			<dialog
 				ref={dialog}
+				data-lenis-prevent
 				className={`studio-dialog ${project ? "project-dialog" : ""}`}
 				onCancel={() => setModal(null)}
 				onClick={(e) => {
@@ -550,17 +489,19 @@ function Home() {
 				)}
 				{project && (
 					<div className="project-content">
-						<ConceptArt index={modal as number} />
+						<div className="service-dialog-art" aria-hidden="true">
+							{["↗", "◉", "✳", "✎"][modal as number]}
+						</div>
 						<div className="project-description">
-							<span className="eyebrow">{t.concept}</span>
+							<span className="eyebrow">{t.servicesLabel}</span>
 							<h2 id="dialog-title">{project.title}</h2>
-							<p>{project.desc}</p>
+							<p>{project.detail}</p>
 							<div className="tags">
-								{project.deliverables.map((item) => (
+								{project.tags.map((item) => (
 									<span key={item}>{item}</span>
 								))}
 							</div>
-							<p className="form-note">{t.conceptNote}</p>
+
 							<button
 								className="pill-button"
 								type="button"
@@ -572,7 +513,7 @@ function Home() {
 						</div>
 					</div>
 				)}
-			</dialog>
-		</>
+			</dialog>{" "}
+		</div>
 	);
 }

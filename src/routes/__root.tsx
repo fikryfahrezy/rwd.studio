@@ -12,8 +12,8 @@ export const Route = createRootRoute({
 				content:
 					"RWD Studio is a multidisciplinary creative studio. Software, design, film, photography, animation, and illustration. From the first idea to the final detail.",
 			},
-			{ name: "theme-color", content: "#f3f2e9" },
-			{ property: "og:title", content: "RWD Studio — Serious about play." },
+			{ name: "theme-color", content: "#ece9df" },
+			{ property: "og:title", content: "RWD Studio — Ideas in play." },
 			{
 				property: "og:description",
 				content:
@@ -21,9 +21,7 @@ export const Route = createRootRoute({
 			},
 			{ property: "og:type", content: "website" },
 		],
-		links: [
-			{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-		],
+		links: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
 	}),
 	shellComponent: RootDocument,
 });
