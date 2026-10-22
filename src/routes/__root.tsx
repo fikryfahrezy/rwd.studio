@@ -21,7 +21,7 @@ export const Route = createRootRoute({
 			},
 			{ property: "og:type", content: "website" },
 		],
-		links: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
+		links: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg?v=2" }],
 	}),
 	shellComponent: RootDocument,
 });
