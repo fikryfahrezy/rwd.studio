@@ -27,6 +27,7 @@ export function useStudioMotion(
 	onChapter: (chapter: number) => void,
 ) {
 	const instance = useRef<Lenis | null>(null);
+	const settle = useRef<(() => void) | null>(null);
 	const current = useRef({ locked, motion, onChapter });
 	current.current = { locked, motion, onChapter };
 	useEffect(() => {
@@ -41,16 +42,63 @@ export function useStudioMotion(
 		});
 		instance.current = lenis;
 		studioScroll.y = window.scrollY;
-		lenis.on("scroll", (event) => {
-			studioScroll.y = event.animatedScroll;
-			studioScroll.velocity = event.velocity;
-		});
 		const journey = document.getElementById("journey")!;
 		const world = document.getElementById("world")!;
 		const panels = Array.from(
 			document.querySelectorAll<HTMLElement>("[data-chapter-copy]"),
 		);
 		const preference = matchMedia("(prefers-reduced-motion: reduce)");
+		let snapTimer: ReturnType<typeof setTimeout> | undefined;
+		let dragging = false;
+		function scheduleSnap() {
+			clearTimeout(snapTimer);
+			if (dragging || lenis.isTouching || current.current.locked) return;
+			snapTimer = setTimeout(() => {
+				if (dragging || lenis.isTouching || current.current.locked) return;
+				const travel = Math.max(1, journey.offsetHeight - innerHeight);
+				const step = travel / (panels.length - 1);
+				const nearest = Math.max(
+					0,
+					Math.min(
+						panels.length - 1,
+						Math.round((lenis.scroll - journey.offsetTop) / step),
+					),
+				);
+				const target = journey.offsetTop + nearest * step;
+				if (Math.abs(lenis.scroll - target) < 1) return;
+				lenis.scrollTo(target, {
+					duration: 0.65,
+					easing: (t) => 1 - (1 - t) ** 3,
+					immediate: preference.matches || !current.current.motion,
+				});
+			}, 180);
+		}
+		settle.current = scheduleSnap;
+		lenis.on("scroll", (event) => {
+			studioScroll.y = event.animatedScroll;
+			studioScroll.velocity = event.velocity;
+			scheduleSnap();
+		});
+		const beginDrag = () => {
+			dragging = true;
+			clearTimeout(snapTimer);
+			if (!current.current.locked && lenis.isScrolling === "smooth") {
+				// Reset an in-progress animation before a native drag takes over.
+				lenis.stop();
+				lenis.start();
+			}
+		};
+		const endDrag = () => {
+			dragging = false;
+			scheduleSnap();
+		};
+		window.addEventListener("pointerdown", beginDrag, { passive: true });
+		window.addEventListener("pointerup", endDrag, { passive: true });
+		window.addEventListener("pointercancel", endDrag, { passive: true });
+		window.addEventListener("touchend", endDrag, { passive: true });
+		window.addEventListener("touchcancel", endDrag, { passive: true });
+		window.addEventListener("resize", scheduleSnap, { passive: true });
+		scheduleSnap();
 		let frame = 0,
 			lastChapter = -1;
 		function tick(time: number) {
@@ -94,13 +142,24 @@ export function useStudioMotion(
 		frame = requestAnimationFrame(tick);
 		return () => {
 			cancelAnimationFrame(frame);
+			clearTimeout(snapTimer);
+			window.removeEventListener("pointerdown", beginDrag);
+			window.removeEventListener("pointerup", endDrag);
+			window.removeEventListener("pointercancel", endDrag);
+			window.removeEventListener("touchend", endDrag);
+			window.removeEventListener("touchcancel", endDrag);
+			window.removeEventListener("resize", scheduleSnap);
+			settle.current = null;
 			lenis.destroy();
 			instance.current = null;
 		};
 	}, []);
 	useEffect(() => {
 		if (locked) instance.current?.stop();
-		else instance.current?.start();
+		else {
+			instance.current?.start();
+			settle.current?.();
+		}
 	}, [locked]);
 	return instance;
 }
