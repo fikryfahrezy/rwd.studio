@@ -76,7 +76,8 @@ export function useStudioMotion(
 				const rgb = palette[a].map((v, i) =>
 					Math.round(srgb(v + (palette[a + 1][i] - v) * smooth) * 255),
 				);
-				world.style.backgroundColor = `rgb(${rgb.join(",")})`;
+				const background = `rgb(${rgb.join(",")})`;
+				world.style.backgroundColor = background;
 				world.style.setProperty("--journey-progress", String(raw / 5));
 				panels.forEach((panel, i) => {
 					const distance = p - i;

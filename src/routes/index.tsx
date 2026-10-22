@@ -182,7 +182,9 @@ function Home() {
 							<span>{e.sticker}</span>
 							<span aria-hidden="true">↓</span>
 						</button>
-						<p className="welcome-description">{e.heroDescription}</p>
+						<p className="welcome-description readable-copy">
+							{e.heroDescription}
+						</p>
 						<span className="little-note">
 							{e.touch}
 							<svg viewBox="0 0 90 55" aria-hidden="true">
@@ -207,11 +209,11 @@ function Home() {
 							<br />
 							<em>{e.ideaTitle[1]}</em>
 						</h2>
-						<div className="thinking-note">
+						<div className="thinking-note readable-copy">
 							<span className="asterisk">✳</span>
 							<p>{e.ideaBody}</p>
 						</div>
-						<span className="thinking-foot">{e.ideaNote}</span>
+						<span className="thinking-foot readable-copy">{e.ideaNote}</span>
 					</section>
 					<section
 						className="chapter-copy digital-copy"
@@ -225,7 +227,7 @@ function Home() {
 							<br />
 							<em>{e.digitalTitle[1]}</em>
 						</h2>
-						<div className="discipline-description">
+						<div className="discipline-description readable-copy">
 							<p>{e.digitalBody}</p>
 							<button
 								type="button"
@@ -260,7 +262,7 @@ function Home() {
 							<br />
 							<em>{e.filmTitle[1]}</em>
 						</h2>
-						<div className="discipline-description">
+						<div className="discipline-description readable-copy">
 							<p>{e.filmBody}</p>
 							<button
 								type="button"
@@ -289,7 +291,7 @@ function Home() {
 								<span key={line}>{i === 1 ? <em>{line}</em> : line}</span>
 							))}
 						</h2>
-						<div className="discipline-description">
+						<div className="discipline-description readable-copy">
 							<p>{e.motionBody}</p>
 							<div className="discipline-links">
 								<button
@@ -336,9 +338,9 @@ function Home() {
 							{t.start}
 							<Arrow />
 						</button>
-						<p>{e.endBody}</p>
+						<p className="readable-copy">{e.endBody}</p>
 						<a
-							className="end-email"
+							className="end-email readable-copy"
 							href={`mailto:${enquiryEmail}`}
 							tabIndex={chapter === 5 ? 0 : -1}
 						>

@@ -4,42 +4,83 @@ import type { Locale } from "../content";
 import { experience } from "../experience";
 import { studioScroll } from "../hooks/useStudioMotion";
 
+// Screen-relative anchors keep the tools in the open space around the copy.
+// Each pose is [viewport x, viewport y, depth, size]. Lenis still interpolates
+// between every pose; portrait layouts have their own composition.
 const frames = [
 	[
-		[-3, 1.5, 0, 0.9],
-		[3.1, 1.1, 0.4, 1],
-		[1.8, -1.5, 1, 0.95],
-		[-3.1, -1.5, 1, 1],
+		[0.13, 0.41, 0, 0.8],
+		[0.87, 0.48, 0.4, 0.85],
+		[0.56, 0.76, 1, 0.8],
+		[0.31, 0.77, 1, 0.65],
 	],
 	[
-		[-3.8, 1.8, -1, 0.65],
-		[3.8, 1.5, -0.5, 0.75],
-		[-2.6, -1.8, 1, 0.65],
-		[3.3, -1.6, 0.5, 0.85],
+		[0.13, 0.58, -1, 0.65],
+		[0.88, 0.56, -0.5, 0.75],
+		[0.24, 0.69, 1, 0.6],
+		[0.83, 0.75, 0.5, 0.65],
 	],
 	[
-		[2.4, 0.1, 1, 1.5],
-		[-6, -2, -3, 0.6],
-		[5, 3, -3, 0.5],
-		[-4, 3, -2, 0.8],
+		[0.73, 0.47, 1, 1.45],
+		[0.92, 0.74, -3, 0.45],
+		[0.92, 0.34, -3, 0.4],
+		[0.57, 0.18, -2, 0.38],
 	],
 	[
-		[-6, 2, -3, 0.6],
-		[2.5, 0.1, 1, 1.6],
-		[-4, -2, -1, 0.6],
-		[5, 3, -2, 0.65],
+		[0.59, 0.18, -3, 0.42],
+		[0.73, 0.45, 1, 1.45],
+		[0.92, 0.75, -1, 0.42],
+		[0.93, 0.45, -2, 0.5],
 	],
 	[
-		[-5, 3, -2, 0.7],
-		[5, -3, -3, 0.6],
-		[2.2, -0.1, 1, 1.5],
-		[3.8, 1.5, 2, 1],
+		[0.59, 0.18, -2, 0.4],
+		[0.51, 0.77, -3, 0.45],
+		[0.69, 0.43, 1, 1.35],
+		[0.88, 0.35, 2, 0.75],
 	],
 	[
-		[-3.4, 1.9, -1, 0.65],
-		[3.4, 1.7, -1, 0.75],
-		[-3.3, -1.6, 0, 0.75],
-		[3.4, -1.5, 1, 0.85],
+		[0.14, 0.35, -1, 0.65],
+		[0.86, 0.32, -1, 0.7],
+		[0.17, 0.7, 0, 0.65],
+		[0.87, 0.68, 1, 0.65],
+	],
+];
+const portraitFrames = [
+	[
+		[0.26, 0.55, 0, 1.15],
+		[0.65, 0.64, 0.4, 1],
+		[0.24, 0.65, 1, 0.8],
+		[0.53, 0.55, 1, 0.65],
+	],
+	[
+		[0.23, 0.52, -1, 0.8],
+		[0.76, 0.54, -0.5, 0.85],
+		[0.11, 0.7, 1, 0.5],
+		[0.49, 0.56, 0.5, 0.5],
+	],
+	[
+		[0.58, 0.51, 1, 1.4],
+		[0.13, 0.57, -3, 0.45],
+		[0.85, 0.62, -3, 0.45],
+		[0.2, 0.43, -2, 0.4],
+	],
+	[
+		[0.22, 0.44, -3, 0.5],
+		[0.6, 0.54, 1, 1.4],
+		[0.15, 0.6, -1, 0.45],
+		[0.87, 0.58, -2, 0.45],
+	],
+	[
+		[0.17, 0.5, -2, 0.45],
+		[0.16, 0.61, -3, 0.5],
+		[0.62, 0.56, 1, 1.2],
+		[0.89, 0.52, 2, 0.6],
+	],
+	[
+		[0.18, 0.55, -1, 0.65],
+		[0.81, 0.55, -1, 0.65],
+		[0.12, 0.28, 0, 0.4],
+		[0.89, 0.29, 1, 0.4],
 	],
 ];
 export default function StudioScene({
@@ -378,6 +419,10 @@ export default function StudioScene({
 			});
 			visibility.observe(element);
 			const move = (event: PointerEvent) => {
+				if ((event.target as Element).closest(".readable-copy")) {
+					pointer.set(-9, -9);
+					return;
+				}
 				const rect = element.getBoundingClientRect();
 				pointer.set(
 					((event.clientX - rect.left) / width) * 2 - 1,
@@ -390,7 +435,11 @@ export default function StudioScene({
 				hovered = -1;
 			};
 			const click = (event: MouseEvent) => {
-				if ((event.target as Element).closest("button,a,input,textarea"))
+				if (
+					(event.target as Element).closest(
+						"button,a,input,textarea,.readable-copy",
+					)
+				)
 					return;
 				const rect = element.getBoundingClientRect();
 				pointer.set(
@@ -428,8 +477,10 @@ export default function StudioScene({
 					b = a + 1,
 					f = p - a,
 					s = f * f * (3 - 2 * f);
-				const mobile = width < 700;
-				camera.position.z = mobile ? 14.8 : 13 - Math.sin(p * Math.PI) * 0.7;
+				const portrait = width <= 700 || width < height;
+				const viewportScale = Math.min(1, width / height, portrait ? 0.55 : 1);
+				const poses = portrait ? portraitFrames : frames;
+				camera.position.z = portrait ? 14.8 : 13 - Math.sin(p * Math.PI) * 0.7;
 				camera.position.x = reduced ? 0 : Math.sin(p * Math.PI) * 0.22;
 				camera.lookAt(0, 0, 0);
 				raycaster.setFromCamera(pointer, camera);
@@ -447,22 +498,27 @@ export default function StudioScene({
 					eventSurface.style.cursor = next >= 0 ? "pointer" : "auto";
 				}
 				items.forEach((group, i) => {
-					const from = frames[a][i],
-						to = frames[b][i];
+					const from = poses[a][i],
+						to = poses[b][i];
 					const x = THREE.MathUtils.lerp(from[0], to[0], s),
 						y = THREE.MathUtils.lerp(from[1], to[1], s),
 						z = THREE.MathUtils.lerp(from[2], to[2], s);
-					const bob = reduced ? 0 : Math.sin(time * 0.001 + i * 1.8) * 0.06;
+					const bob = reduced ? 0 : Math.sin(time * 0.001 + i * 1.8) * 0.025;
+					const viewHeight =
+						2 *
+						Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
+						(camera.position.z - z);
+					const size = (viewHeight / 10) * viewportScale;
 					target.set(
-						x * (mobile ? 0.48 : 1),
-						y * (mobile ? 0.6 : 1) - (mobile ? 0.65 : 0) + bob,
+						(x - 0.5) * viewHeight * camera.aspect,
+						(0.5 - y) * viewHeight + bob,
 						z,
 					);
 					if (!reduced && hovered === i) target.z += 0.45;
 					group.position.lerp(target, reduced ? 1 : 0.14);
 					const scale =
 						THREE.MathUtils.lerp(from[3], to[3], s) *
-						(mobile ? 0.7 : 1) *
+						size *
 						(hovered === i && !reduced ? 1.08 : 1);
 					group.scale.lerp(
 						new THREE.Vector3(scale, scale, scale),
@@ -478,14 +534,24 @@ export default function StudioScene({
 				burst *= 0.92;
 				extras.forEach((group, i) => {
 					const angle = (i / 7) * Math.PI * 2 + p * 0.8;
-					const radius = 3.4 + Math.sin(p * Math.PI) * 0.8 + burst;
+					const discipline = Math.max(0, Math.min(1, p - 1, 5 - p));
+					const viewHeight =
+						2 *
+						Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) *
+						(camera.position.z + 1);
+					const cx = portrait ? 0.5 : 0.5 + discipline * 0.24;
+					const cy = portrait ? 0.55 : 0.5 - discipline * 0.06;
+					const rx = portrait ? 0.4 : 0.44 - discipline * 0.24;
+					const ry = portrait ? 0.1 : 0.34 - discipline * 0.16;
 					group.position.set(
-						Math.cos(angle) * radius * (mobile ? 0.47 : 1),
-						Math.sin(angle) * 2.6 - (mobile ? 0.4 : 0),
-						-1 + Math.sin(angle + p),
+						(cx + Math.cos(angle) * rx - 0.5) * viewHeight * camera.aspect,
+						(0.5 - cy + Math.sin(angle) * ry) * viewHeight,
+						-1,
 					);
 					group.rotation.set(p + i, angle, p * 0.5);
-					group.scale.setScalar(mobile ? 0.7 : 1);
+					group.scale.setScalar(
+						(viewHeight / 10) * viewportScale * (0.65 + burst * 0.2),
+					);
 				});
 				screenOrb.rotation.z = p * 2;
 				rim.rotation.z = p;
