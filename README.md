@@ -5,11 +5,11 @@ A bilingual, scroll-directed studio playground built with React, TanStack Start,
 ## Local development
 
 ```sh
-pnpm install
-pnpm dev
+bun install
+bun run dev
 ```
 
-For a static preview, run `pnpm build` and serve `dist/client`.
+For a static preview, run `bun run build` and serve `dist/client`.
 
 ## Current design direction
 
